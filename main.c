@@ -12,6 +12,9 @@
 /* ************************************************************************** */
 
 #include "ls.h"
+#include <stdlib.h>
+
+#include <stdio.h>
 
 void write_mode(int mode, unsigned char type)
 {
@@ -37,21 +40,22 @@ void get_flags(char *flag, char **av, int ac)
 		if (av[m][0] == '-')
 		{
 			n = 0;
-			while (av[++n])
-				flag[av[n]] = 1;
+			while (av[m][++n])
+				flag[av[m][n]] = 1;
 		}
 }
 
-char *ft_strdup(char *str);
+char *ft_strdup(char *str)
 {
 	int n;
-	int dest;
+	char *dest;
 
 	n = -1;
 	while (str[++n])
 		;
 	if (!(dest = malloc(sizeof(char) * (n + 1))))
 		return (0);
+	n = -1;
 	while (str[++n])
 		dest[n] = str[n];
 	dest[n] = 0;
@@ -62,10 +66,10 @@ void t_dir_free(t_dir **files)
 {
 	int n;
 
-	if (!(**files) || !(*files))
+	if (!(*files))
 		return ;
 	n = -1;
-	while ((*files)[++n])
+	while ((*files)[++n].name)
 		free((*files)[n].name);
 	free(*files);
 	*files = 0;
@@ -73,47 +77,92 @@ void t_dir_free(t_dir **files)
 
 int files_realloc(t_dir **files, char *name, int type)
 {
-	t_dir	*tmp
+	t_dir	*tmp;
 	int		n;
 
 	n = -1;
-	while ((*files)[++n])
+	while ((*files)[++n].name)
 		;
 	if (!(tmp = malloc(sizeof(t_dir) * (n + 2))))
 		return (0);
 	n = -1;
-	while ((*files)[++n])
+	while ((*files)[++n].name)
 	{
 		tmp[n].name = (*files)[n].name;
 		tmp[n].type = (*files)[n].type;
 	}
 	tmp[n].name = name;
 	tmp[n].type = type;
+	tmp[n + 1].name = 0;
 	free(*files);
 	*files = tmp;
 	return (1);
 }
 
-int fill_files(char *path, t_dir **files)
+int fill_files(char *path, t_dir **files, char *flag)
 {
 	DIR		*dir;
 	struct	dirent *info;
 
 	if (!(*files = malloc(sizeof(t_dir))))
 		return (0);
-	(*files)[0] = 0;
- 	if (!(open = opendir(path)))
-        return (0);
-    while ((info = readdir(open)))
-		if (!files_realloc(files, ft_strdup(info->d_name), info->d_type)
-    closedir(open);
-	return (0);
+	(*files)[0].name = 0;
+ 	if (!(dir = opendir(path)))
+        	return (0);
+    	while ((info = readdir(dir)))
+		if (flag['a'] || info->d_name[0] != '.')
+			if (!files_realloc(files, ft_strdup(info->d_name), info->d_type))
+				return (0);
+	closedir(dir);
+	return (1);
+}
+
+int	ft_strcmp(char *s1, char *s2)
+{
+	int n;	
+	
+	n = -1;
+	while (s1[++n] == s2[n] && s1[n] && s2[n])
+		;
+	return (s1[n] - s2[n]);
 }
 
 void	sort_by_name(t_dir *files)
 {
+	t_dir	tmp;
+	int		n;
+	int		m;
+	int		ret1;
+	int		ret2;
+
+	m = -1;
+	while (files[++m].name)
+	{
+		n = 0;
+		while (files[++n].name)
+		{
+			if (files[n - 1].name[0] == '.')
+				ret1 = 1;
+			else
+				ret1 = 0;
+			if (files[n].name[0] == '.')
+				ret2 = 1;
+			else
+				ret2 = 0;
+			if (ft_strcmp(&(files[n - 1].name[ret1]), &(files[n].name[ret2])) > 0)
+			{
+				tmp = files[n - 1];
+				files[n - 1] = files[n];
+				files[n] = tmp;
+			}
+		}
+	}
+}
+/*
+void	sort_by_time(t_dir *files, struct stat *stats)
+{
 	char	*tmp_name;
-	char	*tmp_time;
+	int	tmp_type;
 	int		n;
 	int		m;
 
@@ -122,16 +171,29 @@ void	sort_by_name(t_dir *files)
 	{
 		n = 0;
 		while (files[++n])
-			if ()
-	
+			if (stats)
+			{
+				tmp_name = files[n - 1].name;
+				tmp_type = files[n - 1].type;
+				files[n - 1].name = files[n].name;
+				files[n - 1].type = files[n].type;
+				files[n].name = tmp_name;
+				files[n].type = tmp_type;
+			}
 	}
-}
+}*/
 
 int list_files(char *flag, char *path)
 {
 	t_dir	*files;
+	int n;
 
-
+	if (!fill_files(path, &files, flag))
+		return (0);
+	sort_by_name(files);
+	n = -1;
+	while (files[++n].name)
+		printf("%s\n", files[n].name);
 	return (1);
 }
 
@@ -139,19 +201,20 @@ int main(int ac, char **av)
 {
 	char flag[127];
 	char *path;
-    DIR *open;
-    struct dirent *info;
-    
-    if (ac <= 1)
-    {
-
-    }
-    else if (!(open = opendir(av[1])))
-        return (-1);
-    while ((info = readdir(open)))
-    {
-        printf("type = %d  name = %s\n", info->d_type, info->d_name);
-    }
-    closedir(open);
-    return (0);
+	int n;
+   
+   	path = 0;
+	n = 0;
+	get_flags(flag, av, ac);
+	while (++n < ac)
+		if (av[n][0] != '-')
+		{
+			path = ft_strdup(av[n]);
+			break ;
+		}
+	if (path == 0)
+		path = ft_strdup(".");
+	if (!list_files(flag, path))
+		return (-1);
+	return (0);
 }

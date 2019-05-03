@@ -19,12 +19,12 @@
 # include <dirent.h>
 # include <unistd.h>
 
-struct					s_dir;
+struct					s_dir
 {
 	char				*name;
 	unsigned char		type;
 };
 
-typedef struct s_dir	t_dir
+typedef struct s_dir	t_dir;
 
 #endif
