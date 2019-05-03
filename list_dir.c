@@ -25,7 +25,7 @@ int main(int ac, char **av)
 	}
 	else if (!(open = opendir(av[1])))
 		return (-1);
-	while (info = readdir(open))
+	while ((info = readdir(open)))
 	{
 		printf("type = %d  name = %s\n", info->d_type, info->d_name);
 	}
