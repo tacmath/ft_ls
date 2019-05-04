@@ -80,7 +80,11 @@ void t_dir_free(t_dir **files)
 		return ;
 	n = -1;
 	while ((*files)[++n].name)
+	{
 		free((*files)[n].name);
+		free((*files)[n].username);
+		free((*files)[n].groupe);
+	}
 	free(*files);
 	*files = 0;
 }
@@ -113,6 +117,7 @@ int fill_files(char *path, t_dir **files, char *flag)
 {
 	DIR		*dir;
 	struct	dirent *info;
+	int		n;
 
 	if (!(*files = malloc(sizeof(t_dir))))
 		return (0);
@@ -124,6 +129,12 @@ int fill_files(char *path, t_dir **files, char *flag)
 			if (!files_realloc(files, ft_strdup(info->d_name), info->d_type))
 				return (0);
 	closedir(dir);
+	n = -1;
+	while ((*files)[++n].name)
+	{
+		(*files)[n].username = 0;	
+		(*files)[n].groupe = 0;
+	}
 	return (1);
 }
 
@@ -234,7 +245,7 @@ int get_stats(char *path, t_dir *files, struct stat **stats)
 	{
 		if (!(tmp = add_to_path(path, files[n].name)))
 			return (0);
-		stat(tmp, &(*stats)[n]);
+		lstat(tmp, &(*stats)[n]);
 		free(tmp);
 	}
 	return (1);
@@ -324,8 +335,8 @@ int get_more_info(t_dir	*files, struct stat *stats)
 	{
 		tmp_name = getpwuid(stats[n].st_uid);
 		tmp_group = getgrgid(stats[n].st_gid);
-		files[n].username = tmp_name->pw_name;
-		files[n].groupe = tmp_group->gr_name;
+		files[n].username = ft_strdup(tmp_name->pw_name);
+		files[n].groupe = ft_strdup(tmp_group->gr_name);
 	}
 }
 
