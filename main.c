@@ -16,15 +16,25 @@
 
 #include <stdio.h>
 
-void write_mode(int mode, unsigned char type)
+void write_mode(char *line, int mode, unsigned char type)
 {
-    static char (right[])[3] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"};
+	static char (right[])[3] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"};
 	static char types[] = " pc d b - l s";
+	int tmp;
  
- 	write(1, &types[type], 1);
-    write(1, right[(mode >> 6) & 7], 3);
-    write(1, right[(mode >> 3) & 7], 3);
-    write(1, right[mode & 7], 3);
+ 	line[0] = types[type];
+	tmp = (mode >> 6) & 7;
+	line[1] = right[tmp][0];
+	line[2] = right[tmp][1];
+	line[3] = right[tmp][2];
+	tmp = (mode >> 3) & 7;
+	line[4] = right[tmp][0];
+	line[5] = right[tmp][1];
+	line[6] = right[tmp][2];
+	tmp = mode & 7;
+	line[7] = right[tmp][0];
+	line[8] = right[tmp][1];
+	line[9] = right[tmp][2];
 }
 
 void get_flags(char *flag, char **av, int ac)
@@ -253,6 +263,171 @@ void rev_all(t_dir *files, struct stat *stats)
 	}
 }
 
+int get_number_len(int nb)
+{
+	int n;
+	
+	n = 0;
+	while (nb)
+	{
+		n++;	
+		nb /= 10;
+	}
+	return (n);
+}
+
+void get_best_len(t_dir *files, struct stat *stats, int *len)
+{
+	int n;
+		
+	len[0] = 0;
+	len[1] = 0;
+	len[2] = 0;
+	len[3] = 0;
+	n = -1;
+	while (files[++n].name)
+	{
+		if (stats[n].st_nlink > len[0])
+			len[0] = stats[n].st_nlink;
+		if (stats[n].st_size > len[1])
+			len[1] = stats[n].st_size;
+		if (ft_strlen(files[n].username) > len[2])
+			len[2] = ft_strlen(files[n].username);
+		if (ft_strlen(files[n].groupe) > len[3])
+			len[3] = ft_strlen(files[n].groupe);
+	}
+	len[0] = get_number_len(len[0]);
+	len[1] = get_number_len(len[1]);
+}
+
+int get_total_len(t_dir *files, struct stat *stats, int *len)
+{
+	int n;
+	int total;
+	
+	total = 0;
+	n = -1;
+	while (files[++n].name)
+		total += ft_strlen(files[n].name) + 1;	
+	total += n * (len[0] + len[1] + len[2] + len[3] + 10 + 6 + 12) + 1;
+	return (total);
+}
+
+int get_more_info(t_dir	*files, struct stat *stats)
+{
+	struct group *tmp_group;
+	struct passwd *tmp_name;
+	int n;
+	
+	n = -1;
+	while (files[++n].name)
+	{
+		tmp_name = getpwuid(stats[n].st_uid);
+		tmp_group = getgrgid(stats[n].st_gid);
+		files[n].username = tmp_name->pw_name;
+		files[n].groupe = tmp_group->gr_name;
+	}
+}
+
+void add_number_to_line(char *line, int nb, int len)
+{
+	line[0] = ' ';
+	line = &line[1];
+	while (nb)
+	{
+		line[--len] = nb % 10 + '0';
+		nb /= 10;
+	}
+	while (len)
+		line[--len] = ' ';
+}
+
+void write_groupe_and_name(char *line, t_dir files, int *len)
+{
+	int n;
+	int m;
+	
+	line[0] = ' ';
+	line = &line[1];
+	m = len[2] - ft_strlen(files.username);
+	n = -1;
+	while (++n < m)
+		line[n] = ' ';
+	n = -1;
+	m--;
+	while (++m < len[2])
+		line[m] = files.username[++n];
+	m = len[2] + len[3] - ft_strlen(files.groupe) + 1;
+	n = len[2] - 1;
+	while (++n < m)
+		line[n] = ' ';
+	n = -1;
+	m--;
+	while (++m < len[2] + len[3] + 1)
+		line[m] = files.groupe[++n];
+}
+
+void write_time(char *line, char *time)
+{
+	int ret;
+	int n;
+
+	time = &time[3];
+	n = -1;
+	ret = 0;
+	while (ret != 2 && time[++n])
+	{
+		if (time[n + 1] == ':')
+			ret++;
+		line[n] = time[n];
+	}
+}
+
+int write_file_name(char *line, char *name)
+{
+	int n;
+
+	line[0] = ' ';
+	line = &line[1];
+	n = -1;
+	while (name[++n])
+		line[n] = name[n];
+	line[n] = '\n';
+}
+
+int write_all_info(t_dir *files, struct stat *stats)
+{
+	int len[4];
+	char *tmp;
+	int start;
+	int n;
+
+	get_more_info(files, stats);
+	get_best_len(files, stats, len);
+	if (!(tmp = malloc(sizeof(char) * get_total_len(files, stats, len))))
+		return (0);
+	start = 0;
+	n = -1;
+	while (files[++n].name)
+	{
+		write_mode(&tmp[start], stats[n].st_mode, files[n].type);
+		start += 10;
+		add_number_to_line(&tmp[start], stats[n].st_nlink, len[0]);
+		start += len[0] + 1;
+		write_groupe_and_name(&tmp[start], files[n], len);
+		start += len[2] + len[3] + 2;
+		add_number_to_line(&tmp[start], stats[n].st_size, len[1]);
+		start += len[1] + 1;
+		write_time(&tmp[start], ctime(&(stats[n].st_mtime)));
+		start += 13;
+		write_file_name(&tmp[start], files[n].name);
+		start += ft_strlen(files[n].name) + 2;	
+	}
+	write(1, tmp, start);
+	free(tmp);
+	return (1);
+}
+
 int list_files(char *flag, char *path)
 {
 	t_dir	*files;
@@ -269,9 +444,14 @@ int list_files(char *flag, char *path)
 		sort_by_time(files, stats);
 	if (flag['r'])
 		rev_all(files, stats);
-	n = -1;
-	while (files[++n].name)
-		printf("%s\n", files[n].name);
+	if (flag['l'] && !write_all_info(files, stats))
+		return (0);
+	else if (!flag['l'])
+	{
+		n = -1;
+		while (files[++n].name)
+			printf("%s\n", files[n].name);
+	}
 	t_dir_free(&files);
 	free(stats);
 	free(path);

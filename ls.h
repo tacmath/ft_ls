@@ -16,12 +16,17 @@
 
 # include <sys/types.h>
 # include <sys/stat.h>
+# include <pwd.h>
+# include <grp.h>
+# include <time.h>
 # include <dirent.h>
 # include <unistd.h>
 
 struct					s_dir
 {
 	char				*name;
+	char				*username;
+	char				*groupe;
 	unsigned char		type;
 };
 
