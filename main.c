@@ -478,11 +478,21 @@ int list_files(char *flag, char *path)
 		while (files[++n].name)
 			if (files[n].type == 4)
 			{
-				write(1, "\n", 1);
 				tmp = add_to_path(path, files[n].name);
-				write(1, tmp, ft_strlen(tmp));
-				write(1, ":\n", 2);
-				list_files(flag, tmp);
+				if (stats[n].st_mode >> 6 & 7 >= 4)
+				{
+					write(1, "\n", 1);
+					write(1, tmp, ft_strlen(tmp));
+					write(1, ":\n", 2);
+					list_files(flag, tmp);
+				}
+				else
+				{
+					write(1, "ft_ls: cannot open directory '", 30);
+					write(1, tmp, ft_strlen(tmp));
+					write(1, "' Permission denied\n", 20);
+					free(tmp);
+				}
 			}
 	}
 	t_dir_free(&files);
