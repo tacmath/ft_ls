@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/03 14:17:09 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/03 17:12:56 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/05 16:00:32 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -338,6 +338,7 @@ int get_more_info(t_dir	*files, struct stat *stats)
 		files[n].username = ft_strdup(tmp_name->pw_name);
 		files[n].groupe = ft_strdup(tmp_group->gr_name);
 	}
+	return (1);
 }
 
 void add_number_to_line(char *line, int nb, int len)
@@ -394,7 +395,7 @@ void write_time(char *line, char *time)
 	}
 }
 
-int write_file_name(char *line, char *name)
+void write_file_name(char *line, char *name)
 {
 	int n;
 
@@ -439,15 +440,27 @@ int write_all_info(t_dir *files, struct stat *stats)
 	return (1);
 }
 
+void write_all_files(t_dir *files)
+{
+	int n;
+
+	n = -1;
+	while (files[++n].name)
+	{
+		write(1, files[n].name, ft_strlen(files[n].name));
+		write(1, "\n", 1);
+	}
+}
+
 int list_files(char *flag, char *path)
 {
 	t_dir	*files;
 	struct stat *stats;
+	char *tmp;
 	int n;
 
-	if (!fill_files(path, &files, flag))
-		return (0);
-	if (!(get_stats(path, files, &stats)))
+	if (!fill_files(path, &files, flag) ||
+		!(get_stats(path, files, &stats)))
 		return (0);
 	if (!flag['t'])
 		sort_by_name(files);
@@ -458,10 +471,19 @@ int list_files(char *flag, char *path)
 	if (flag['l'] && !write_all_info(files, stats))
 		return (0);
 	else if (!flag['l'])
+		write_all_files(files);
+	if (flag['R'])
 	{
 		n = -1;
 		while (files[++n].name)
-			printf("%s\n", files[n].name);
+			if (files[n].type == 4)
+			{
+				write(1, "\n", 1);
+				tmp = add_to_path(path, files[n].name);
+				write(1, tmp, ft_strlen(tmp));
+				write(1, ":\n", 2);
+				list_files(flag, tmp);
+			}
 	}
 	t_dir_free(&files);
 	free(stats);
