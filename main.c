@@ -63,6 +63,19 @@ void write_mode(char *line, mode_t mode)
 	write_bit(line, mode >> 9 & 7);
 }
 
+void *ft_memalloc(int size)
+{
+	char *mem;
+	int n;
+
+	if (!(mem = malloc(sizeof(char) * size)))	
+		return (0);
+	n = -1;
+	while (++n < size)
+		mem[n] = 0;
+	return ((void*)mem);
+}
+
 int ft_strlen(char *str)
 {
 	int n;
@@ -194,6 +207,7 @@ void t_dir_free(t_dir **files)
 		free((*files)[n].name);
 		free((*files)[n].username);
 		free((*files)[n].groupe);
+		free((*files)[n].link);
 	}
 	free(*files);
 	*files = 0;
@@ -240,6 +254,7 @@ int fill_files(char *path, t_dir **files, char *flag)
 	{
 		(*files)[n].username = 0;	
 		(*files)[n].groupe = 0;
+		(*files)[n].link = 0;
 	}
 	return (1);
 }
@@ -331,10 +346,29 @@ char *add_to_path(char *path, char *add)
 	return (new);
 }
 
+char *get_link(char *path)
+{
+	char *buf;
+	int n;
+
+	n = 20;
+	if (!(buf = ft_memalloc(n)))
+		return (0);
+	while (readlink(path, buf, n) == n)
+	{
+		free(buf);
+		n += 20;
+		if (!(buf = ft_memalloc(n)))
+			return (0);	
+	}
+	return (buf);
+}
+
 int get_stats(char *path, t_dir *files, struct stat **stats)
 {
 	int n;
 	char *tmp;
+	char *buf;
 
 	n = -1;
 	while (files[++n].name)
@@ -347,6 +381,8 @@ int get_stats(char *path, t_dir *files, struct stat **stats)
 		if (!(tmp = add_to_path(path, files[n].name)))
 			return (0);
 		lstat(tmp, &(*stats)[n]);
+		if ((*stats)[n].st_mode >> 12 == 10)
+			files[n].link = get_link(tmp);
 		free(tmp);
 	}
 	return (1);
@@ -398,6 +434,7 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
 	len[1] = 1;
 	len[2] = 1;
 	len[3] = 1;
+	len[4] = 0;
 	n = -1;
 	while (files[++n].name)
 	{
@@ -409,9 +446,12 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
 			len[2] = ft_strlen(files[n].username);
 		if (ft_strlen(files[n].groupe) > len[3])
 			len[3] = ft_strlen(files[n].groupe);
+		len[4] += stats[n].st_blocks;
 	}
+	len[4] /= 2;
 	len[0] = get_number_len(len[0]);
 	len[1] = get_number_len(len[1]);
+	len[5] = get_number_len(len[4]);
 }
 
 int get_total_len(t_dir *files, struct stat *stats, int *len)
@@ -422,8 +462,12 @@ int get_total_len(t_dir *files, struct stat *stats, int *len)
 	total = 0;
 	n = -1;
 	while (files[++n].name)
-		total += ft_strlen(files[n].name) + 1;	
-	total += n * (len[0] + len[1] + len[2] + len[3] + 10 + 6 + 12) + 1;
+	{
+		total += ft_strlen(files[n].name) + 1;
+		if (files[n].link)
+			total += ft_strlen(files[n].link) + 4;
+	}
+	total += n * (len[0] + len[1] + len[2] + len[3] + 10 + 6 + 12) + 7 + len[5] + 1;
 	return (total);
 }
 
@@ -484,37 +528,82 @@ void write_groupe_and_name(char *line, t_dir files, int *len)
 		line[m] = files.groupe[++n];
 }
 
-void write_time(char *line, char *time)
+int ft_strcmp(char *s1, char *s2)
 {
-	int ret;
 	int n;
 
-	time = &time[3];
 	n = -1;
-	ret = 0;
-	while (ret != 2 && time[++n])
-	{
-		if (time[n + 1] == ':')
-			ret++;
-		line[n] = time[n];
-	}
+	while (s1[++n] == s2[n] && s1[n])
+		;
+	return (s1[n] - s2[n]);
 }
 
-void write_file_name(char *line, char *name)
+void write_time(char *line, char *ftime)
+{
+	int ret;
+	time_t rtime;
+	char year[7];
+	int n;
+	
+	ftime = &ftime[3];
+	n = -1;
+	while (ftime[16 + ++n])
+		year[n] = ftime[16 + n];
+	year[n] = 0;
+	n = -1;
+	ret = 0;
+	while (ret != 2 && ftime[++n])
+	{
+		if (ftime[n + 1] == ':')
+			ret++;
+		line[n] = ftime[n];
+	}
+	time(&rtime);
+	ftime = ctime(&rtime);
+	if (ft_strcmp(year, &ftime[19]) && (n = -1))
+		while (year[++n] != '\n')
+			line[n + 8] = year[n];
+}
+
+void write_file_name(char *line, t_dir file)
 {
 	int n;
 
 	line[0] = ' ';
 	line = &line[1];
 	n = -1;
-	while (name[++n])
-		line[n] = name[n];
+	while (file.name[++n])
+		line[n] = file.name[n];
 	line[n] = '\n';
+	if (file.link)
+	{
+		line[n] = ' ';
+		line[n + 1] = '-';
+		line[n + 2] = '>';
+		line[n + 3] = ' ';
+		line = &line[n + 4];
+		n = -1;
+		while (file.link[++n])
+			line[n] = file.link[n];
+		line[n] = '\n';
+	}
+}
+
+void write_total(char *line, int *len)
+{
+	static char total[] = "total \0";
+	int n;
+
+	n = -1;
+	while (total[++n])
+		line[n] = total[n];
+	line[n + len[5]] = '\n';
+	add_number_to_line(&line[5], len[4], len[5]);
 }
 
 int write_all_info(t_dir *files, struct stat *stats)
 {
-	int len[4];
+	int len[6];
 	char *tmp;
 	int start;
 	int n;
@@ -523,7 +612,8 @@ int write_all_info(t_dir *files, struct stat *stats)
 	get_best_len(files, stats, len);
 	if (!(tmp = malloc(sizeof(char) * get_total_len(files, stats, len))))
 		return (0);
-	start = 0;
+	write_total(tmp, len);
+	start = 7 + len[5];
 	n = -1;
 	while (files[++n].name)
 	{
@@ -537,8 +627,10 @@ int write_all_info(t_dir *files, struct stat *stats)
 		start += len[1] + 1;
 		write_time(&tmp[start], ctime(&(stats[n].st_mtime)));
 		start += 13;
-		write_file_name(&tmp[start], files[n].name);
-		start += ft_strlen(files[n].name) + 2;	
+		write_file_name(&tmp[start], files[n]);
+		start += ft_strlen(files[n].name) + 2;
+		if (files[n].link)
+			start += ft_strlen(files[n].link) + 4;
 	}
 	write(1, tmp, start);
 	free(tmp);
@@ -620,7 +712,11 @@ int fill_start_files(t_dir **files, struct stat **stats, int ac, char **av)
 		{
 			(*files)[m].name = ft_strdup(av[n]);
 			(*files)[m].username = 0;
-			(*files)[m++].groupe = 0;
+			(*files)[m].groupe = 0;
+			if ((*stats)[m].st_mode >> 12 == 10)
+				(*files)[m++].link = get_link(av[n]);
+			else
+				(*files)[m++].link = 0;
 		}
 		else if (av[n][0] != '-' && !write_error_nofree(
 	"ft_ls: cannot access '", av[n], "' No such file or directory\n"))
@@ -683,6 +779,8 @@ int get_total_start_len(t_dir *files, struct stat *stats, int *len)
 		if (stats[n].st_mode >> 12 != 4)
 		{
 			total += ft_strlen(files[n].name) + 1;
+			if (files[n].link)
+				total += ft_strlen(files[n].link) + 4;
 			m++;
 		}
 	total += m * (len[0] + len[1] + len[2] + len[3] + 10 + 6 + 12) + 1;
@@ -716,8 +814,10 @@ int write_all_start_info(t_dir *files, struct stat *stats)
 			start += len[1] + 1;
 			write_time(&tmp[start], ctime(&(stats[n].st_mtime)));
 			start += 13;
-			write_file_name(&tmp[start], files[n].name);
+			write_file_name(&tmp[start], files[n]);
 			start += ft_strlen(files[n].name) + 2;
+			if (files[n].link)
+				start += ft_strlen(files[n].link) + 4;
 		}
 	}
 	write(1, tmp, start);

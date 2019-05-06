@@ -27,6 +27,7 @@ struct					s_dir
 	char				*name;
 	char				*username;
 	char				*groupe;
+	char				*link;
 };
 
 typedef struct s_dir	t_dir;
