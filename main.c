@@ -685,7 +685,7 @@ int list_files(char *flag, char *path)
 					list_files(flag, tmp);
 				}
 				else if (!write_error(
-	"ft_ls: cannot open directory '", tmp, "' Permission denied\n"))
+	"ft_ls: cannot open directory '", tmp, "': Permission denied\n"))
 					return (0);
 			}
 	}
@@ -884,15 +884,21 @@ int main(int ac, char **av)
 	while (files[++n].name)
 		if (stats[n].st_mode >> 12 == 4)
 		{
-			if (n > 0 || get_nb_files(files, stats))
-				write(1, "\n", 1);
-			if (nb_start_files(ac, av) > 1)
+			if (stats[n].st_mode >> 6 & 7 >= 4)
 			{
-				write(1, files[n].name, ft_strlen(files[n].name));
-				write(1, ":\n", 2);
+				if (n > 0 || get_nb_files(files, stats))
+					write(1, "\n", 1);
+				if (nb_start_files(ac, av) > 1)
+				{
+					write(1, files[n].name, ft_strlen(files[n].name));
+					write(1, ":\n", 2);
+				}
+				if (!list_files(flag, ft_strdup(files[n].name)))
+					return(1);
 			}
-			if (!list_files(flag, ft_strdup(files[n].name)))
-				return(1);
+			else if (!write_error_nofree(
+"ft_ls: cannot open directory '", files[n].name, "': Permission denied\n"))
+				return (0);
 		}
 	t_dir_free(&files);
 	free(stats);
