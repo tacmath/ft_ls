@@ -14,6 +14,33 @@
 #include "ls.h"
 #include <stdlib.h>
 
+void write_bit(char *line, int type)
+{
+	if (type >= 4)
+	{
+		if (line[3] == 'x')
+			line[3] = 's';
+		else
+			line[3] = 'S';
+		type -= 4;
+	}
+	if (type >= 2)
+	{
+		if (line[6] == 'x')
+			line[6] = 's';
+		else
+			line[6] = 'S';
+		type -= 2;
+	}
+	if (type == 1)
+	{
+		if (line[9] == 'x')
+			line[9] = 't';
+		else
+			line[9] = 'T';
+	}
+}
+
 void write_mode(char *line, mode_t mode)
 {
 	static char (right[])[3] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"};
@@ -33,6 +60,7 @@ void write_mode(char *line, mode_t mode)
 	line[7] = right[tmp][0];
 	line[8] = right[tmp][1];
 	line[9] = right[tmp][2];
+	write_bit(line, mode >> 9 & 7);
 }
 
 int ft_strlen(char *str)
@@ -364,10 +392,10 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
 {
 	int n;
 		
-	len[0] = 0;
-	len[1] = 0;
-	len[2] = 0;
-	len[3] = 0;
+	len[0] = 1;
+	len[1] = 1;
+	len[2] = 1;
+	len[3] = 1;
 	n = -1;
 	while (files[++n].name)
 	{
@@ -418,6 +446,8 @@ void add_number_to_line(char *line, int nb, int len)
 {
 	line[0] = ' ';
 	line = &line[1];
+	if (nb == 0)
+		line[--len] = '0';
 	while (nb)
 	{
 		line[--len] = nb % 10 + '0';
@@ -615,10 +645,10 @@ void get_best_start_len(t_dir *files, struct stat *stats, int *len)
 {
 	int n;
 		
-	len[0] = 0;
-	len[1] = 0;
-	len[2] = 0;
-	len[3] = 0;
+	len[0] = 1;
+	len[1] = 1;
+	len[2] = 1;
+	len[3] = 1;
 	n = -1;
 	while (files[++n].name)
 	{
