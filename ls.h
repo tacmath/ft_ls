@@ -27,7 +27,6 @@ struct					s_dir
 	char				*name;
 	char				*username;
 	char				*groupe;
-	unsigned char		type;
 };
 
 typedef struct s_dir	t_dir;
