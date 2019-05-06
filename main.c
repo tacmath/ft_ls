@@ -380,6 +380,8 @@ int get_number_len(int nb)
 	int n;
 	
 	n = 0;
+	if (nb == 0)
+		n++;
 	while (nb)
 	{
 		n++;	
