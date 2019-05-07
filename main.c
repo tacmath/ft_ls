@@ -506,26 +506,22 @@ void add_number_to_line(char *line, int nb, int len)
 void write_groupe_and_name(char *line, t_dir files, int *len)
 {
 	int n;
-	int m;
 	
 	line[0] = ' ';
 	line = &line[1];
-	m = len[2] - ft_strlen(files.username);
 	n = -1;
-	while (++n < m)
+	while (files.username[++n])
+		line[n] = files.username[n];
+	n--;
+	while (++n < len[2] + 1)
 		line[n] = ' ';
+	line = &line[n];
 	n = -1;
-	m--;
-	while (++m < len[2])
-		line[m] = files.username[++n];
-	m = len[2] + len[3] - ft_strlen(files.groupe) + 1;
-	n = len[2] - 1;
-	while (++n < m)
+	while (files.groupe[++n])
+		line[n] = files.groupe[n];
+	n--;
+	while (++n < len[2] + len[3] + 1)
 		line[n] = ' ';
-	n = -1;
-	m--;
-	while (++m < len[2] + len[3] + 1)
-		line[m] = files.groupe[++n];
 }
 
 int ft_strcmp(char *s1, char *s2)
