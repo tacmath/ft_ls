@@ -435,6 +435,7 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
 	len[2] = 1;
 	len[3] = 1;
 	len[4] = 0;
+	len[6] = 0;
 	n = -1;
 	while (files[++n].name)
 	{
@@ -442,16 +443,22 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
 			len[0] = stats[n].st_nlink;
 		if (stats[n].st_size > len[1])
 			len[1] = stats[n].st_size;
+		if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > len[1])
+			len[1] = minor(stats[n].st_rdev);
 		if (ft_strlen(files[n].username) > len[2])
 			len[2] = ft_strlen(files[n].username);
 		if (ft_strlen(files[n].groupe) > len[3])
 			len[3] = ft_strlen(files[n].groupe);
-		len[4] += stats[n].st_blocks;
+		if (stats[n].st_mode >> 12 == 2 && major(stats[n].st_rdev) > len[4])
+			len[4] = major(stats[n].st_rdev);
+		len[6] += stats[n].st_blocks;
 	}
-	len[4] /= 2;
+	if (len[4])
+		len[4] = get_number_len(len[4]) + 2;
+	len[6] /= 2;
 	len[0] = get_number_len(len[0]);
 	len[1] = get_number_len(len[1]);
-	len[5] = get_number_len(len[4]);
+	len[5] = get_number_len(len[6]);
 }
 
 int get_total_len(t_dir *files, struct stat *stats, int *len)
@@ -467,7 +474,7 @@ int get_total_len(t_dir *files, struct stat *stats, int *len)
 		if (files[n].link)
 			total += ft_strlen(files[n].link) + 4;
 	}
-	total += n * (len[0] + len[1] + len[2] + len[3] + 10 + 6 + 12) + 7 + len[5] + 1;
+	total += n * (len[0] + len[1] + len[2] + len[3] + len[4] + 10 + 6 + 12) + 7 + len[5] + 1;
 	return (total);
 }
 
@@ -594,12 +601,24 @@ void write_total(char *line, int *len)
 	while (total[++n])
 		line[n] = total[n];
 	line[n + len[5]] = '\n';
-	add_number_to_line(&line[5], len[4], len[5]);
+	add_number_to_line(&line[5], len[6], len[5]);
+}
+
+void write_size(char *line, struct stat stats, int *len)
+{
+	if (stats.st_mode >> 12 == 2)
+	{
+		add_number_to_line(line, major(stats.st_rdev), len[4] - 2);
+		line[len[4] - 1] = ',';
+		add_number_to_line(&line[len[4]], minor(stats.st_rdev), len[1]);
+	}
+	else
+		add_number_to_line(line, stats.st_size, len[4] + len[1]);
 }
 
 int write_all_info(t_dir *files, struct stat *stats)
 {
-	int len[6];
+	int len[7];
 	char *tmp;
 	int start;
 	int n;
@@ -619,8 +638,8 @@ int write_all_info(t_dir *files, struct stat *stats)
 		start += len[0] + 1;
 		write_groupe_and_name(&tmp[start], files[n], len);
 		start += len[2] + len[3] + 2;
-		add_number_to_line(&tmp[start], stats[n].st_size, len[1]);
-		start += len[1] + 1;
+		write_size(&tmp[start], stats[n], len);
+		start += len[1] + len[4] + 1;
 		write_time(&tmp[start], ctime(&(stats[n].st_mtime)));
 		start += 13;
 		write_file_name(&tmp[start], files[n]);
@@ -738,11 +757,13 @@ int nb_start_files(int ac, char **av)
 void get_best_start_len(t_dir *files, struct stat *stats, int *len)
 {
 	int n;
+	int tmp;
 		
 	len[0] = 1;
 	len[1] = 1;
 	len[2] = 1;
 	len[3] = 1;
+	len[4] = 0;
 	n = -1;
 	while (files[++n].name)
 	{
@@ -752,12 +773,18 @@ void get_best_start_len(t_dir *files, struct stat *stats, int *len)
 				len[0] = stats[n].st_nlink;
 			if (stats[n].st_size > len[1])
 				len[1] = stats[n].st_size;
+			if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > len[1])
+				len[1] = minor(stats[n].st_rdev);
 			if (ft_strlen(files[n].username) > len[2])
 				len[2] = ft_strlen(files[n].username);
 			if (ft_strlen(files[n].groupe) > len[3])
 				len[3] = ft_strlen(files[n].groupe);
+			if (stats[n].st_mode >> 12 == 2 && len[4] < major(stats[n].st_rdev))
+				len[4] = major(stats[n].st_rdev);
 		}
 	}
+	if (len[4])
+		len[4] = get_number_len(len[4]) + 2;
 	len[0] = get_number_len(len[0]);
 	len[1] = get_number_len(len[1]);
 }
@@ -779,13 +806,13 @@ int get_total_start_len(t_dir *files, struct stat *stats, int *len)
 				total += ft_strlen(files[n].link) + 4;
 			m++;
 		}
-	total += m * (len[0] + len[1] + len[2] + len[3] + 10 + 6 + 12) + 1;
+	total += m * (len[0] + len[1] + len[2] + len[3] + len[4] + 10 + 6 + 12) + 1;
 	return (total);
 }
 
 int write_all_start_info(t_dir *files, struct stat *stats)
 {
-	int len[4];
+	int len[5];
 	char *tmp;
 	int start;
 	int n;
@@ -806,8 +833,8 @@ int write_all_start_info(t_dir *files, struct stat *stats)
 			start += len[0] + 1;
 			write_groupe_and_name(&tmp[start], files[n], len);
 			start += len[2] + len[3] + 2;
-			add_number_to_line(&tmp[start], stats[n].st_size, len[1]);
-			start += len[1] + 1;
+			write_size(&tmp[start], stats[n], len);
+			start += len[1] + len[4] + 1;
 			write_time(&tmp[start], ctime(&(stats[n].st_mtime)));
 			start += 13;
 			write_file_name(&tmp[start], files[n]);
