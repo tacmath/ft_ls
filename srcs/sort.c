@@ -29,8 +29,6 @@ int		name_cmp(char *s1, char *s2)
 	return (s1[n] - s2[m]);
 }
 
-#include <stdio.h>
-
 void	sort_by_name(t_dir *files, struct stat *stats, int len)
 {
 	t_dir		tmp;
