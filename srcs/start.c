@@ -40,18 +40,20 @@ void	tab_init(void *tab, int len)
 void	get_best_start_len(t_dir *files, struct stat *stats, int *len)
 {
 	int n;
+	unsigned long int tmp;
 
 	tab_init(len, sizeof(int) * 5);
+	tmp = 0;
 	n = -1;
 	while (files[++n].name)
 		if (stats[n].st_mode >> 12 != 4)
 		{
 			if (stats[n].st_nlink > len[0])
 				len[0] = stats[n].st_nlink;
-			if (stats[n].st_size > len[1])
-				len[1] = stats[n].st_size;
-			if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > len[1])
-				len[1] = minor(stats[n].st_rdev);
+			if (stats[n].st_size > tmp)
+				tmp = stats[n].st_size;
+			if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > tmp)
+				tmp = minor(stats[n].st_rdev);
 			if (ft_strlen(files[n].username) > len[2])
 				len[2] = ft_strlen(files[n].username);
 			if (ft_strlen(files[n].groupe) > len[3])
@@ -62,7 +64,7 @@ void	get_best_start_len(t_dir *files, struct stat *stats, int *len)
 	if (len[4])
 		len[4] = get_number_len(len[4]) + 2;
 	len[0] = get_number_len(len[0]);
-	len[1] = get_number_len(len[1]);
+	len[1] = get_number_len(tmp);
 }
 
 int		get_total_start_len(t_dir *files, struct stat *stats, int *len)
@@ -130,12 +132,22 @@ int		write_all_start_info(t_dir *files, struct stat *stats)
 	return (1);
 }
 
+int t_dir_len(t_dir *files)
+{
+	int n;
+	
+	n = -1;
+	while (files[++n].name)
+		;
+	return (n);	
+}
+
 int		write_start(char *flag, t_dir *files, struct stat *stats)
 {
 	int n;
 
 	if (!flag['t'])
-		sort_by_name(files, stats);
+		sort_by_name(files, stats, t_dir_len(files));
 	else
 		sort_by_time(files, stats);
 	if (flag['r'])

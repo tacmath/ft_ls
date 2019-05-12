@@ -29,33 +29,37 @@ int		name_cmp(char *s1, char *s2)
 	return (s1[n] - s2[m]);
 }
 
-void	sort_by_name(t_dir *files, struct stat *stats)
+#include <stdio.h>
+
+void	sort_by_name(t_dir *files, struct stat *stats, int len)
 {
 	t_dir		tmp;
 	struct stat	tmp_stat;
-	int			ret;
+	char		*compa;
 	int			n;
 	int			m;
-
-	m = -1;
-	while (files[++m].name && !(ret = 0))
-	{
-		n = 0;
-		while (files[++n].name)
-			if (name_cmp(files[n - 1].name, files[n].name) > 0)
+	
+	if (len < 2)
+		return ;
+	compa = files[len - 1].name;
+	m = 0;
+	n = -1;
+	while (++n < len)
+		if (name_cmp(files[n].name, compa) <= 0)
+		{	
+			if (m != n)
 			{
-				tmp = files[n - 1];
-				tmp_stat = stats[n - 1];
-				files[n - 1] = files[n];
-				stats[n - 1] = stats[n];
-				files[n] = tmp;
-				stats[n] = tmp_stat;
+				tmp = files[n];
+				tmp_stat = stats[n];
+				files[n] = files[m];
+				stats[n] = stats[m];
+				files[m] = tmp;
+				stats[m] = tmp_stat;
 			}
-			else
-				ret++;
-		if (ret + 1 == n)
-			return ;
-	}
+			m++;
+		}
+	sort_by_name(files, stats, m - 1);
+	sort_by_name(&files[m - 1], &stats[m - 1], len - m + 1);
 }
 
 void	sort_by_time(t_dir *files, struct stat *stats)

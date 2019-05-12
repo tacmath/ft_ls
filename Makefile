@@ -30,7 +30,7 @@ LIB = $(addprefix $(LIBDIR),$(LIBFILES))
 SRC = $(addprefix $(SRCDIR),$(SRCFILES))
 INC = $(addprefix $(INCDIR),$(INCFILES))
 OBJ = $(SRC:.c=.o)
-FLAG = -Wall -Werror -Wextra -I includes
+FLAG = -I includes
 
 all: $(NAME)
 

@@ -33,7 +33,7 @@ char *add_to_path(char *path, char *add)
     return (new);
 }
 
-int get_number_len(int nb)
+int get_number_len(unsigned long int nb)
 {
     int n;
     
@@ -58,7 +58,7 @@ int ft_strcmp(char *s1, char *s2)
     return (s1[n] - s2[n]);
 }
 
-void add_number_to_line(char *line, int nb, int len)
+void add_number_to_line(char *line, unsigned long int nb, int len)
 {
     line[0] = ' ';
     line = &line[1];

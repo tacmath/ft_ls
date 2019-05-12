@@ -81,6 +81,25 @@ char	*get_link(char *path)
 	return (buf);
 }
 
+void		stats_init(struct stat *stats)
+{
+	(*stats).st_dev = 0;
+	(*stats).st_ino = 0;
+	(*stats).st_mode = 0;
+	(*stats).st_nlink = 0;
+	(*stats).st_uid = 0;
+	(*stats).st_gid = 0;
+	(*stats).st_rdev = 0;
+	(*stats).st_size = 0;
+	(*stats).st_blksize = 0;
+	(*stats).st_blocks = 0;
+	(*stats).st_atime = 0;
+	(*stats).st_mtime = 0;
+	(*stats).st_ctime = 0;
+}
+
+#include <stdio.h>
+
 int		get_stats(char *path, t_dir *files, struct stat **stats)
 {
 	int		n;
@@ -96,6 +115,7 @@ int		get_stats(char *path, t_dir *files, struct stat **stats)
 	{
 		if (!(tmp = add_to_path(path, files[n].name)))
 			return (0);
+		stats_init(&(*stats)[n]);
 		lstat(tmp, &(*stats)[n]);
 		if ((*stats)[n].st_mode >> 12 == 10)
 			files[n].link = get_link(tmp);

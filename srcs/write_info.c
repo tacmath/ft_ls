@@ -20,16 +20,22 @@ void write_groupe_and_name(char *line, t_dir files, int *len)
     line[0] = ' ';
     line = &line[1];
     n = -1;
-    while (files.username[++n])
-        line[n] = files.username[n];
-    n--;
+    if (files.username);
+    {
+    	while (files.username[++n])
+     	   line[n] = files.username[n];
+    	n--;
+    }
     while (++n < len[2] + 1)
         line[n] = ' ';
     line = &line[n];
     n = -1;
-    while (files.groupe[++n])
-        line[n] = files.groupe[n];
-    n--;
+    if (files.groupe)
+    {
+    	while (files.groupe[++n])
+        	line[n] = files.groupe[n];
+    	n--;
+    }
     while (++n < len[2] + len[3] + 1)
         line[n] = ' ';
 }

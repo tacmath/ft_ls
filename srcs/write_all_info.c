@@ -16,6 +16,7 @@
 void get_best_len(t_dir *files, struct stat *stats, int *len)
 {
     int n;
+    unsigned long tmp;
     
     len[0] = 1;
     len[1] = 1;
@@ -23,15 +24,16 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
     len[3] = 1;
     len[4] = 0;
     len[6] = 0;
+    tmp = 0;
     n = -1;
     while (files[++n].name)
     {
         if (stats[n].st_nlink > len[0])
             len[0] = stats[n].st_nlink;
-        if (stats[n].st_size > len[1])
-            len[1] = stats[n].st_size;
-        if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > len[1])
-            len[1] = minor(stats[n].st_rdev);
+        if (stats[n].st_size > tmp)
+            tmp = stats[n].st_size;
+        if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > tmp)
+            tmp = minor(stats[n].st_rdev);
         if (ft_strlen(files[n].username) > len[2])
             len[2] = ft_strlen(files[n].username);
         if (ft_strlen(files[n].groupe) > len[3])
@@ -44,7 +46,7 @@ void get_best_len(t_dir *files, struct stat *stats, int *len)
         len[4] = get_number_len(len[4]) + 2;
     len[6] /= 2;
     len[0] = get_number_len(len[0]);
-    len[1] = get_number_len(len[1]);
+    len[1] = get_number_len(tmp);
     len[5] = get_number_len(len[6]);
 }
 
@@ -112,7 +114,7 @@ int list_files(char *flag, char *path)
         !(get_stats(path, files, &stats)))
         return (0);
     if (!flag['t'])
-        sort_by_name(files, stats);
+        sort_by_name(files, stats, t_dir_len(files));
     else
         sort_by_time(files, stats);
     if (flag['r'])
