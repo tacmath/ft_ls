@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/10 14:47:34 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/10 14:47:36 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/13 16:09:10 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -58,7 +58,7 @@ int ft_strcmp(char *s1, char *s2)
     return (s1[n] - s2[n]);
 }
 
-void add_number_to_line(char *line, unsigned long int nb, int len)
+void add_number_to_line(char *line, unsigned long int nb, unsigned long int len)
 {
     line[0] = ' ';
     line = &line[1];

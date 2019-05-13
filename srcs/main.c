@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/03 14:17:09 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/10 16:39:39 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/13 16:39:05 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -74,17 +74,27 @@ int		write_name(char *name)
 	return (1);
 }
 
+char *get_time(void)
+{
+	time_t temp;
+
+	time(&temp);
+	return (ft_strdup(ctime(&temp)));
+}
+
 int		main(int ac, char **av)
 {
 	char		flag[127];
 	t_dir		*files;
+	char		*time;
 	struct stat	*stats;
 	int			n;
 
 	get_flags(flag, av, ac);
+	time = get_time();
 	if (!(n = -1) || !fill_start_files(&files, &stats, ac, av) ||
-			(!nb_start_files(ac, av) && !list_files(flag, ft_strdup("."))) ||
-			!write_start(flag, files, stats))
+		(!nb_start_files(ac, av) && !list_files(flag, ft_strdup("."), time))
+			|| !write_start(flag, files, stats, time))
 		return (1);
 	while (files[++n].name)
 		if (stats[n].st_mode >> 12 == 4 && (stats[n].st_mode >> 6 & 7) >= 4)
@@ -92,12 +102,13 @@ int		main(int ac, char **av)
 			if (n > 0 || get_nb_files(files, stats))
 				write(1, "\n", 1);
 			if ((nb_start_files(ac, av) > 1 && !write_name(files[n].name))
-				|| !list_files(flag, ft_strdup(files[n].name)))
+				|| !list_files(flag, ft_strdup(files[n].name), time))
 				return (1);
 		}
 		else if (stats[n].st_mode >> 12 == 4 && !write_error_nofree(
 	"ft_ls: cannot open directory '", files[n].name, "': Permission denied\n"))
 				return (1);
 	free(stats);
+	free(time);
 	return (t_dir_free(&files));
 }

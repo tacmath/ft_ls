@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/10 14:38:01 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/10 15:31:44 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/13 16:42:01 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -33,10 +33,15 @@ int	fill_files(char *path, t_dir **files, char *flag)
 	DIR				*dir;
 	struct dirent	*info;
 	int				n;
-
+	
+	*files = 0;
 	if (!(*files = malloc(sizeof(t_dir) * 1000)) ||
 		!(dir = opendir(path)))
+	{
+		write_error("ft_ls: ", path, ": Permission denied\n");
+		free(*files);
 		return (0);
+	}
 	n = 0;
 	while ((info = readdir(dir)))
 		if (flag['a'] || info->d_name[0] != '.')

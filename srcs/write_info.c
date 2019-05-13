@@ -6,14 +6,14 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/10 14:38:34 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/10 14:38:36 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/13 16:56:49 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
 
 #include "ft_ls.h"
 
-void write_groupe_and_name(char *line, t_dir files, int *len)
+void write_groupe_and_name(char *line, t_dir files, unsigned long int *len)
 {
     int n;
     
@@ -40,18 +40,13 @@ void write_groupe_and_name(char *line, t_dir files, int *len)
         line[n] = ' ';
 }
 
-void write_time(char *line, char *ftime)
+void write_time(char *line, char *ftime, char *atime)
 {
     int ret;
     time_t rtime;
-    char year[7];
     int n;
     
     ftime = &ftime[3];
-    n = -1;
-    while (ftime[16 + ++n])
-        year[n] = ftime[16 + n];
-    year[n] = 0;
     n = -1;
     ret = 0;
     while (ret != 2 && ftime[++n])
@@ -60,11 +55,9 @@ void write_time(char *line, char *ftime)
             ret++;
         line[n] = ftime[n];
     }
-    time(&rtime);
-    ftime = ctime(&rtime);
-    if (ft_strcmp(year, &ftime[19]) && (n = -1))
-        while (year[++n] != '\n')
-            line[n + 8] = year[n];
+    if (ft_strcmp(&atime[22], &ftime[19]) && (n = -1))
+        while (ftime[++n + 16] != '\n')
+            line[n + 8] = ftime[n + 16];
 }
 
 void write_file_name(char *line, t_dir file)
@@ -91,7 +84,7 @@ void write_file_name(char *line, t_dir file)
     }
 }
 
-void write_total(char *line, int *len)
+void write_total(char *line, unsigned long int *len)
 {
     static char total[] = "total \0";
     int n;
@@ -103,7 +96,7 @@ void write_total(char *line, int *len)
     add_number_to_line(&line[5], len[6], len[5]);
 }
 
-void write_size(char *line, struct stat stats, int *len)
+void write_size(char *line, struct stat stats, unsigned long int *len)
 {
     if (stats.st_mode >> 12 == 2)
     {
