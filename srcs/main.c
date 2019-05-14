@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/03 14:17:09 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/13 16:39:05 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/14 16:34:42 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -34,8 +34,8 @@ void	get_flags(char *flag, char **av, int ac)
 				{
 					buf[0] = av[m][n];
 					buf[1] = 0;
-					write_error_nofree("ft_ls: invalid option -- '",
-						buf, "'\n");
+					write_error_nofree("ft_ls: illegal option -- ", buf,
+						"\nusage: ft_ls [-Ralrt] [file ...]\n");
 					exit(2);
 				}
 			}
@@ -74,7 +74,7 @@ int		write_name(char *name)
 	return (1);
 }
 
-char *get_time(void)
+char	*get_time(void)
 {
 	time_t temp;
 
@@ -106,9 +106,7 @@ int		main(int ac, char **av)
 				return (1);
 		}
 		else if (stats[n].st_mode >> 12 == 4 && !write_error_nofree(
-	"ft_ls: cannot open directory '", files[n].name, "': Permission denied\n"))
-				return (1);
-	free(stats);
-	free(time);
-	return (t_dir_free(&files));
+	"ft_ls: ", files[n].name, ": Permission denied\n"))
+			return (1);
+	return (error_free(stats) || error_free(time) || t_dir_free(&files));
 }

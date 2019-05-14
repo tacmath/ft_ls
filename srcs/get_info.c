@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/10 14:38:27 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/13 14:16:48 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/14 16:31:30 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -81,7 +81,7 @@ char	*get_link(char *path)
 	return (buf);
 }
 
-void		stats_init(struct stat *stats)
+void	stats_init(struct stat *stats)
 {
 	(*stats).st_dev = 0;
 	(*stats).st_ino = 0;
@@ -98,8 +98,6 @@ void		stats_init(struct stat *stats)
 	(*stats).st_ctime = 0;
 }
 
-#include <stdio.h>
-
 int		get_stats(char *path, t_dir *files, struct stat **stats)
 {
 	int		n;
@@ -115,13 +113,35 @@ int		get_stats(char *path, t_dir *files, struct stat **stats)
 	{
 		if (!(tmp = add_to_path(path, files[n].name)))
 			return (0);
-		stats_init(&(*stats)[n]);
-		lstat(tmp, &(*stats)[n]);
+		if (lstat(tmp, &(*stats)[n]) == -1)
+		{
+			stats_init(&(*stats)[n]);
+			write_error_nofree("ft_ls: ", path, "Permission denied\n");
+		}
 		if ((*stats)[n].st_mode >> 12 == 10)
 			files[n].link = get_link(tmp);
 		free(tmp);
 	}
 	return (1);
+}
+
+char	*ft_bad_itoa(unsigned long int nb)
+{
+	int		len;
+	char	*tmp;
+
+	len = get_number_len(nb);
+	if (!(tmp = malloc(sizeof(char) * (len + 1))))
+		return (0);
+	tmp[len] = 0;
+	if (nb == 0)
+		tmp[len] = '0';
+	while (nb)
+	{
+		tmp[--len] = nb % 10 + '0';
+		nb /= 10;
+	}
+	return (tmp);
 }
 
 int		get_more_info(t_dir *files, struct stat *stats)
@@ -133,10 +153,14 @@ int		get_more_info(t_dir *files, struct stat *stats)
 	n = -1;
 	while (files[++n].name)
 	{
-		tmp_name = getpwuid(stats[n].st_uid);
-		tmp_group = getgrgid(stats[n].st_gid);
-		files[n].username = ft_strdup(tmp_name->pw_name);
-		files[n].groupe = ft_strdup(tmp_group->gr_name);
+		if ((tmp_name = getpwuid(stats[n].st_uid)))
+			files[n].username = ft_strdup(tmp_name->pw_name);
+		else if (!(files[n].username = ft_bad_itoa(stats[n].st_uid)))
+			return (0);
+		if ((tmp_group = getgrgid(stats[n].st_gid)))
+			files[n].groupe = ft_strdup(tmp_group->gr_name);
+		else if (!(files[n].groupe = ft_bad_itoa(stats[n].st_gid)))
+			return (0);
 	}
 	return (1);
 }

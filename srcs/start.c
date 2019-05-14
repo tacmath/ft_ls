@@ -6,7 +6,7 @@
 /*   By: mtaquet <marvin@le-101.fr>                 +:+   +:    +:    +:+     */
 /*                                                 #+#   #+    #+    #+#      */
 /*   Created: 2019/05/10 14:38:11 by mtaquet      #+#   ##    ##    #+#       */
-/*   Updated: 2019/05/13 16:17:13 by mtaquet     ###    #+. /#+    ###.fr     */
+/*   Updated: 2019/05/14 17:03:17 by mtaquet     ###    #+. /#+    ###.fr     */
 /*                                                         /                  */
 /*                                                        /                   */
 /* ************************************************************************** */
@@ -37,7 +37,8 @@ void	tab_init(void *tab, int len)
 		tmp[n] = 0;
 }
 
-void	get_best_start_len(t_dir *files, struct stat *stats, unsigned long int *len)
+void	get_best_start_len(t_dir *files, struct stat *stats,
+		unsigned long int *len)
 {
 	int n;
 
@@ -48,24 +49,23 @@ void	get_best_start_len(t_dir *files, struct stat *stats, unsigned long int *len
 		{
 			if (stats[n].st_nlink > len[0])
 				len[0] = stats[n].st_nlink;
-			if (stats[n].st_size > len[1])
+			if ((unsigned long int)stats[n].st_size > len[1])
 				len[1] = stats[n].st_size;
-			if (stats[n].st_mode >> 12 == 2 && minor(stats[n].st_rdev) > len[1])
+			if (stats[n].st_mode >> 12 == 2 &&
+				minor(stats[n].st_rdev) > (int)len[1])
 				len[1] = minor(stats[n].st_rdev);
-			if (ft_strlen(files[n].username) > len[2])
+			if (ft_strlen(files[n].username) > (int)len[2])
 				len[2] = ft_strlen(files[n].username);
-			if (ft_strlen(files[n].groupe) > len[3])
+			if (ft_strlen(files[n].groupe) > (int)len[3])
 				len[3] = ft_strlen(files[n].groupe);
-			if (stats[n].st_mode >> 12 == 2 && len[4] < major(stats[n].st_rdev))
+			if (stats[n].st_mode >> 12 == 2 &&
+					(int)len[4] < major(stats[n].st_rdev))
 				len[4] = major(stats[n].st_rdev);
 		}
-	if (len[4])
-		len[4] = get_number_len(len[4]) + 2;
-	len[0] = get_number_len(len[0]);
-	len[1] = get_number_len(len[1]);
 }
 
-int		get_total_start_len(t_dir *files, struct stat *stats, unsigned long int *len)
+int		get_total_start_len(t_dir *files, struct stat *stats,
+		unsigned long int *len)
 {
 	int n;
 	int m;
@@ -82,16 +82,20 @@ int		get_total_start_len(t_dir *files, struct stat *stats, unsigned long int *le
 				total += ft_strlen(files[n].link) + 4;
 			m++;
 		}
+	if (len[4])
+		len[4] = get_number_len(len[4]) + 2;
+	len[0] = get_number_len(len[0]);
+	len[1] = get_number_len(len[1]);
 	total += m * (len[0] + len[1] + len[2] + len[3] + len[4] + 10 + 6 + 12) + 1;
 	return (total);
 }
 
 int		write_all_start_info(t_dir *files, struct stat *stats, char *time)
 {
-	unsigned long int len[5];
-	char	*tmp;
-	int		start;
-	int n;
+	unsigned long int	len[5];
+	char				*tmp;
+	int					start;
+	int					n;
 
 	get_more_info(files, stats);
 	get_best_start_len(files, stats, len);
@@ -115,14 +119,14 @@ int		write_all_start_info(t_dir *files, struct stat *stats, char *time)
 	return (1);
 }
 
-int t_dir_len(t_dir *files)
+int		t_dir_len(t_dir *files)
 {
 	int n;
-	
+
 	n = -1;
 	while (files[++n].name)
 		;
-	return (n);	
+	return (n);
 }
 
 int		write_start(char *flag, t_dir *files, struct stat *stats, char *time)
@@ -132,7 +136,7 @@ int		write_start(char *flag, t_dir *files, struct stat *stats, char *time)
 	if (!flag['t'])
 		sort_by_name(files, stats, t_dir_len(files));
 	else
-		sort_by_time(files, stats);
+		sort_by_time(files, stats, t_dir_len(files));
 	if (flag['r'])
 		rev_all(files, stats);
 	if (flag['l'])
