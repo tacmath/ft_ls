@@ -13,12 +13,6 @@
 
 #include "ft_ls.h"
 
-int		error_free(void *ptr)
-{
-	free(ptr);
-	return (0);
-}
-
 char	*add_to_path(char *path, char *add)
 {
 	char	*new;

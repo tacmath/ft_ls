@@ -13,30 +13,6 @@
 
 #include "ft_ls.h"
 
-int		nb_start_files(int ac, char **av)
-{
-	int n;
-	int nb;
-
-	n = 0;
-	nb = 0;
-	while (++n < ac)
-		if (av[n][0] != '-')
-			nb++;
-	return (nb);
-}
-
-void	tab_init(void *tab, int len)
-{
-	int		n;
-	char	*tmp;
-
-	n = -1;
-	tmp = (char*)tab;
-	while (++n < len)
-		tmp[n] = 0;
-}
-
 void	get_best_start_len(t_dir *files, struct stat *stats,
 		unsigned long int *len)
 {
